@@ -1,24 +1,24 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const auth = require("../../middleware/auth");
-const { check, validationResult } = require("express-validator");
-const User = require("../../models/User");
-const jwt = require("jsonwebtoken");
-const config = require("config");
-const bcrypt = require("bcryptjs");
+const auth = require('../../middleware/auth');
+const { check, validationResult } = require('express-validator');
+const User = require('../../models/User');
+const jwt = require('jsonwebtoken');
+const config = require('config');
+const bcrypt = require('bcryptjs');
 
 // @route:   GET api/auth
-// @desc:    Will show the records of all users
-// @access:  Public(Won't require any token to access this route)
+// @desc:    Load user <-> Will show the records of all users
+// @access:  Private <-> Public(Won't require any token to access this route)
 
-router.get("/", auth, async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
     // I'm gonna connect with my db to get user's data.
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.user.id).select('-password');
     res.json(user);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("server error");
+    res.status(500).send('server error');
   }
 });
 
@@ -28,10 +28,10 @@ router.get("/", auth, async (req, res) => {
 
 // Login route...
 router.post(
-  "/",
+  '/',
   [
-    check("email", "Please include a valid email").isEmail(),
-    check("password", "Password is required").exists(),
+    check('email', 'Please include a valid email').isEmail(),
+    check('password', 'Password is required').exists(),
   ],
   async (req, res) => {
     // console.log(req.body);
@@ -46,14 +46,18 @@ router.post(
       // See if the user exists
       let user = await User.findOne({ email });
       if (!user) {
-        return res.status(400).json({ errors: [{ msg: "Invalid Credentials" }] });
+        return res
+          .status(400)
+          .json({ errors: [{ msg: 'Invalid Credentials' }] });
       }
 
       // Check if the password match.
       const isMatch = await bcrypt.compare(password, user.password);
 
       if (!isMatch) {
-        return res.status(400).json({ errors: [{ msg: "Invalid Credentials" }] });
+        return res
+          .status(400)
+          .json({ errors: [{ msg: 'Invalid Credentials' }] });
       }
 
       // Return jsonwebtoken
@@ -64,14 +68,19 @@ router.post(
           id: user.id,
         },
       };
-      jwt.sign(payload, config.get("jwtSecret"), { expiresIn: 360000 }, (err, token) => {
-        if (err) throw err;
-        res.json({ token });
-      });
+      jwt.sign(
+        payload,
+        config.get('jwtSecret'),
+        { expiresIn: 360000 },
+        (err, token) => {
+          if (err) throw err;
+          res.json({ token });
+        }
+      );
     } catch (err) {
       // If something is wrong then that's definetly gonna be a server error.
       console.log(err.message);
-      res.status(500).send("Server error");
+      res.status(500).send('Server error');
     }
   }
 );
